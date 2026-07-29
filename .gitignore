@@ -1,0 +1,17 @@
+# Temporary files
+tmp/
+*.tmp
+*.swp
+*~
+
+# Generated test output
+coverage/
+test-results/
+
+# Local editor configuration
+.vscode/
+.idea/
+
+# Operating-system files
+.DS_Store
+Thumbs.db
