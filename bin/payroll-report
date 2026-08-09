@@ -13,22 +13,119 @@ usage() {
   printf 'Usage: payroll-report --input FILE\n'
 }
 
+generatePayrollReport() {
+  local input_file=$1
+
+  awk '
+    BEGIN {
+      print "LGS Employee Wages:- Week 6th - 10th October 2025"
+      print "Name Job-Code Weekly-Wage"
+    }
+
+    $3 == "LGS" {
+      if ($5 <= 40) {
+        wage = $4 * $5
+      } else {
+        wage = ($5 - 40) * (1.5 * $4) + $4 * 40
+      }
+
+      print $1, $2, $3, wage
+
+      if ($5 > 40) {
+        print "Thanks for the extra effort", $1
+        overtime_count++
+      }
+    }
+
+    END {
+      print overtime_count, "LGS employees worked overtime this week"
+    }
+  ' "$input_file"
+
+  awk '
+    BEGIN {
+      project_cost = 4600000
+      project_months = 2.5 * 12
+      monthly_salary = (project_cost * 0.05) / project_months
+
+      print ""
+      print "Projected Salary for Engineers and Managers for October"
+      print "Name Job-Code Monthly-Salary"
+    }
+
+    $3 == "ENG" || $3 == "MGR" {
+      print $1, $2, $3, monthly_salary
+      salary_total = salary_total + monthly_salary
+      employee_count++
+    }
+
+    END {
+      if (employee_count > 0) {
+        average_salary = salary_total / employee_count
+        print "Average predicted salary:", average_salary
+      }
+    }
+  ' "$input_file"
+}
+
+validatePayrollFile() {
+
+  local input_file=$1
+
+  awk ' 
+	NF != 5 {
+	print "invalid feild count on line," NR > "/dev/stderr"
+	invalid=1
+
+}
+
+END {
+exit invalid
+}' "$input_file"
+
+}
+
 main() {
+  local input_file=""
   case "${1:-}" in
   -h | --help)
     usage
+    return 0
     ;;
   "")
     error "an option is required"
     usage >&2
     return 2
     ;;
+  --input)
+
+    if [[ $# -eq 2 ]]; then
+      input_file=$2
+
+    else
+      error "one input is required"
+      usage >&2
+      return 2
+    fi
+    ;;
   *)
     error "unknown option: $1"
     usage >&2
     return 2
     ;;
-  esac
-}
 
+  esac
+
+  if [[ ! -f $input_file ]]; then
+    error "we can't find an input file"
+    return 1
+  fi
+
+  if [[ ! -s $input_file ]]; then
+    error "file is empty"
+    return 1
+  fi
+  validatePayrollFile "$input_file" || return 1
+  generatePayrollReport "$input_file"
+}
 main "$@"
