@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+set -u
+set -o pipefail
+
+transformText() {
+  local input_file=$1
+
+  {
+    echo "Project Change Report"
+
+    # Extract the four-digit year from line 1.
+    head -n 1 "$input_file" | grep -oE '[0-9]{4}'
+
+    # Display lines in the order 3, 2, 4.
+    sed -n '3p' "$input_file"
+    sed -n '2p' "$input_file"
+    sed -n '4p' "$input_file"
+
+    echo
+
+    # Display any remaining lines from line 5 onward.
+    sed -n '5,$p' "$input_file"
+
+  } | sed 's/modern/present-day/g'
+}
+
+if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
+  echo "Usage: text-transform --input FILE [--output FILE]"
+  exit 0
+fi
+
+if [[ ${1:-} != "--input" || -z ${2:-} ]]; then
+  echo "Usage: text-transform --input FILE [--output FILE]" >&2
+  exit 2
+fi
+input_file=$2
+output_file=""
+
+if [[ $# -eq 4 ]]; then
+  if [[ $3 != "--output" || -z ${4:-} ]]; then
+    echo "Usage: text-transform --input FILE [--output FILE]" >&2
+    exit 2
+  fi
+
+  output_file=$4
+elif [[ $# -ne 2 ]]; then
+  echo "Usage: text-transform --input FILE [--output FILE]" >&2
+  exit 2
+fi
+
+if [[ -n $output_file ]]; then
+  transformText "$input_file" >"$output_file"
+else
+  transformText "$input_file"
+fi
