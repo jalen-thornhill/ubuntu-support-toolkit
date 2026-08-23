@@ -1,0 +1,196 @@
+#!/usr/bin/env bash
+
+set -u
+set -o pipefail
+
+usage() {
+  printf 'Usage: user-audit USER [--threshold-kb N] [--passwd-file FILE] [--home-root DIR]\n'
+}
+
+
+checkHomeUsage() {
+  local selectedUser=$1
+  local thresholdKB=$2
+  local passwdFile=$3
+  local homeRoot=$4
+  local selectedHome
+  local usageKB
+
+  selectedHome=$(awk -F: -v user="$selectedUser" '
+    $1 == user {
+      print $6
+      exit
+    }
+  ' "$passwdFile")
+
+  if [[ $homeRoot != "/home" ]]; then
+    selectedHome="${homeRoot}/${selectedUser}"
+  fi
+
+  if [[ ! -d $selectedHome ]]; then
+    printf 'error: home directory not found: %s\n' "$selectedHome" >&2
+    return 1
+  fi
+
+  usageKB=$(du -sk "$selectedHome" 2>/dev/null | awk '{ print $1 }')
+
+  if [[ $usageKB -gt $thresholdKB ]]; then
+    printf 'User %s is close to disk usage limit\n' "$selectedUser"
+  fi
+
+  return 0
+}
+
+checkAuthorization() {
+  local selectedUser=$1
+  local passwdFile=$2
+
+  if [[ ! -r $passwdFile ]]; then
+    printf 'error: cannot read passwd file: %s\n' "$passwdFile" >&2
+    return 1
+  fi
+
+  if ! grep -q "^${selectedUser}:" "$passwdFile"; then
+    printf '%s is not authorised to use this system,\n' "$selectedUser"
+    return 4
+  fi
+
+  return 0
+}
+
+listLargeComp25Users() {
+  local selectedUser=$1
+  local thresholdKB=$2
+  local passwdFile=$3
+  local homeRoot=$4
+  local usageKB
+
+  while IFS=: read -r username _ _ _ _ userHome _; do
+    [[ $username == Comp25* ]] || continue
+    [[ $username == "$selectedUser" ]] && continue
+
+    if [[ $homeRoot != "/home" ]]; then
+      userHome="${homeRoot}/${username}"
+    fi
+
+    [[ -d $userHome ]] || continue
+
+    usageKB=$(du -sk "$userHome" 2>/dev/null | awk '{ print $1 }')
+
+    if [[ $usageKB -gt $thresholdKB ]]; then
+      printf 'Comp25 user above disk limit: %s\n' "$username"
+    fi
+  done < "$passwdFile"
+}
+
+reportIdleComp25Users() {
+  local passwdFile=$1
+  local loggedUsers
+  local processCount
+
+  loggedUsers=$(who | awk '{ print $1 }')
+
+  while IFS=: read -r username _ _ _ _ userHome userShell; do
+    [[ $username == Comp25* ]] || continue
+
+    if printf '%s\n' "$loggedUsers" | grep -qx "$username"; then
+      processCount=$(ps -u "$username" --no-headers 2>/dev/null | wc -l)
+
+      if [[ $processCount -eq 0 ]]; then
+        printf 'Username: %s | Home: %s | Shell: %s | User %s idle or logged out\n' \
+          "$username" "$userHome" "$userShell" "$username"
+      fi
+    fi
+  done < "$passwdFile"
+}
+
+showFiveMinuteLoad() {
+  local fiveMinuteLoad
+
+  fiveMinuteLoad=$(awk '{ print $2 }' /proc/loadavg)
+  printf 'Five-minute load average: %s\n' "$fiveMinuteLoad"
+}
+
+main() {
+  if [[ $# -gt 0 ]] && [[ $1 == "-h" || $1 == "--help" ]]; then
+    usage
+    return 0
+  fi
+
+  if [[ $# -eq 0 ]]; then
+    printf 'error: username is required\n' >&2
+    usage >&2
+    return 3
+  fi
+
+  if [[ $1 == -* ]]; then
+    printf 'error: unknown option: %s\n' "$1" >&2
+    usage >&2
+    return 2
+  fi
+
+  local selectedUser=$1
+  local thresholdKB=900
+  local passwdFile=/etc/passwd
+  local homeRoot=/home
+
+  shift
+
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+    --threshold-kb)
+      if [[ $# -lt 2 || -z ${2:-} ]]; then
+        printf 'error: --threshold-kb requires a value\n' >&2
+        usage >&2
+        return 2
+      fi
+
+      thresholdKB=$2
+      shift 2
+      ;;
+    --passwd-file)
+      if [[ $# -lt 2 || -z ${2:-} ]]; then
+        printf 'error: --passwd-file requires a file\n' >&2
+        usage >&2
+        return 2
+      fi
+
+      passwdFile=$2
+      shift 2
+      ;;
+    --home-root)
+      if [[ $# -lt 2 || -z ${2:-} ]]; then
+        printf 'error: --home-root requires a directory\n' >&2
+        usage >&2
+        return 2
+      fi
+
+      homeRoot=$2
+      shift 2
+      ;;
+    *)
+      printf 'error: unknown option: %s\n' "$1" >&2
+      usage >&2
+      return 2
+      ;;
+    esac
+  done
+
+  if ! [[ $thresholdKB =~ ^[0-9]+$ ]]; then
+    printf 'error: threshold must be a whole number\n' >&2
+    return 2
+  fi
+
+  # These values will be used by the audit sections that follow.
+  : "$selectedUser" "$thresholdKB" "$passwdFile" "$homeRoot"
+
+checkAuthorization "$selectedUser" "$passwdFile" || return $?
+checkHomeUsage "$selectedUser" "$thresholdKB" "$passwdFile" "$homeRoot" || return $?
+ 
+listLargeComp25Users "$selectedUser" "$thresholdKB" "$passwdFile" "$homeRoot"
+reportIdleComp25Users "$passwdFile"
+showFiveMinuteLoad
+ return 0
+}
+
+main "$@"

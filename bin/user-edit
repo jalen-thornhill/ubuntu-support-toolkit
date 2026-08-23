@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+set -u
+set -o pipefail
+
+usage() {
+  printf 'Usage: user-audit USER [--threshold-kb N] [--passwd-file FILE] [--home-root DIR]\n'
+}
+
+main() {
+  if [[ $# -gt 0 ]] && [[ $1 == "-h" || $1 == "--help" ]]; then
+    usage
+    return 0
+  fi
+
+  if [[ $# -eq 0 ]]; then
+    printf 'error: username is required\n' >&2
+    usage >&2
+    return 3
+  fi
+
+  if [[ $1 == -* ]]; then
+    printf 'error: unknown option: %s\n' "$1" >&2
+    usage >&2
+    return 2
+  fi
+
+  local selectedUser=$1
+  local thresholdKB=900
+  local passwdFile=/etc/passwd
+  local homeRoot=/home
+
+  shift
+
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+    --threshold-kb)
+      if [[ $# -lt 2 || -z ${2:-} ]]; then
+        printf 'error: --threshold-kb requires a value\n' >&2
+        usage >&2
+        return 2
+      fi
+
+      thresholdKB=$2
+      shift 2
+      ;;
+    --passwd-file)
+      if [[ $# -lt 2 || -z ${2:-} ]]; then
+        printf 'error: --passwd-file requires a file\n' >&2
+        usage >&2
+        return 2
+      fi
+
+      passwdFile=$2
+      shift 2
+      ;;
+    --home-root)
+      if [[ $# -lt 2 || -z ${2:-} ]]; then
+        printf 'error: --home-root requires a directory\n' >&2
+        usage >&2
+        return 2
+      fi
+
+      homeRoot=$2
+      shift 2
+      ;;
+    *)
+      printf 'error: unknown option: %s\n' "$1" >&2
+      usage >&2
+      return 2
+      ;;
+    esac
+  done
+
+  if ! [[ $thresholdKB =~ ^[0-9]+$ ]]; then
+    printf 'error: threshold must be a whole number\n' >&2
+    return 2
+  fi
+
+  # These values will be used by the audit sections that follow.
+  : "$selectedUser" "$thresholdKB" "$passwdFile" "$homeRoot"
+
+  return 0
+}
+
+main "$@"

@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+
+
+set -u 
+
+set -o pipefail 
+
+usage(){
+echo "Usage: process-watch [--user USER] [--once]"
+}
+
+handleInterrupt() {
+    local breakDelay=$1
+
+    echo
+    sleep "$breakDelay"
+    echo "Process watch stopped."
+    exit 0
+}
+
+showProcess(){
+
+local selectedUser=$1
+
+ps -u "$selectedUser" -o pid,comm,%cpu,%mem
+
+}
+
+watchProcess() {
+    local selectedUser=$1
+    local interval=$2
+    local breakDelay=${3:-0}
+
+    trap 'handleInterrupt "$breakDelay"' INT
+    while true; do
+        clear
+        showProcess "$selectedUser"
+        showSummary "$selectedUser"
+        showMaxMemory "$selectedUser"
+        sleep "$interval"
+    done
+}
+
+showSummary() {
+    local selectedUser=$1
+
+    ps -u "$selectedUser" -o %cpu,%mem --no-headers | awk '
+    {
+        cpuTotal += $1
+        memoryTotal += $2
+    }
+    END {
+        print "Process count:", NR
+        print "CPU total:", cpuTotal
+        print "Memory total:", memoryTotal
+        print "CPU average:", cpuTotal / NR
+        print "Memory average:", memoryTotal / NR
+    }
+    '
+}
+
+
+
+showMaxMemory() {
+    local selectedUser=$1
+
+    ps -u "$selectedUser" -o user=,comm=,%mem= | awk '
+    {
+        if ($3 > maxMemory) {
+            username = $1
+            process = $2
+            maxMemory = $3
+        }
+    }
+    END {
+        print "Maximum-memory process: " process " | User: " username " | Memory: " maxMemory "%"
+    }
+    '
+}
+
+
+main(){
+
+if [[ $# -gt 0 ]] && [[ $1 == "-h" || $1 == "--help" ]]; then
+
+usage
+return 0
+
+fi
+
+
+local selectedUser=$USER
+
+
+local interval=""
+local breakDelay=0
+if [[ $# -eq 0 ]]; then
+  selectedUser=$USER
+
+elif [[ $# -eq 1 ]] && [[ $1 == "--once" ]]; then
+  selectedUser=$USER
+
+elif [[ $# -eq 2 ]] && [[ $1 == "--user" ]]; then
+  selectedUser=$2
+
+elif [[ $# -eq 2 ]] && [[ $1 == "--interval" ]]; then
+  interval=$2
+elif [[ $# -eq 4 && $1 == "--interval" && $3 == "--break-delay" ]]; then
+    interval=$2
+    breakDelay=$4
+
+elif [[ $# -eq 6 ]] && [[ $1 == "--user" ]] && [[ $3 == "--interval" ]] && [[ $5 == "--break-delay" ]]; then
+  selectedUser=$2
+  interval=$4
+  breakDelay=$6
+else
+  echo "error: unknown or incomplete option" >&2
+  usage >&2
+  return 2
+
+elif [[ $# -eq 6 ]] && [[ $1 == "--user" ]] && [[ $3 == "--interval" ]] && [[ $5 == "--break-delay" ]]; then
+  selectedUser=$2
+  interval=$4
+  breakDelay=$6
+fi
+
+local processCount
+if [[ -n $interval ]] && ! [[ $interval =~ ^[1-9][0-9]*$ ]]; then
+  echo "error: interval must be a positive whole number" >&2
+  usage >&2
+  return 2
+fi
+
+if ! [[ $breakDelay =~ ^[0-9]+$ ]]; then
+    echo "error: break delay must be a whole number" >&2
+    usage >&2
+    return 2
+fi
+if [ "$processCount" -eq 0 ]; then
+    echo "No processes found for user: $selectedUser"
+    return 0
+fi
+
+# process-count check above here
+
+if [[ -n $interval ]]; then
+    watchProcess "$selectedUser" "$interval" "$breakDelay"
+else
+    showProcess "$selectedUser"
+    showSummary "$selectedUser"
+    showMaxMemory "$selectedUser"
+fi
+}
+main "$@"
