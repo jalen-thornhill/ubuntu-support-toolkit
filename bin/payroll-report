@@ -1,0 +1,49 @@
+#!/usr/bin/nawk -f
+
+BEGIN{
+
+print "LGS Employee Wages:- Week 6th - 10th October 2026"
+print "Name Job-Code Weekly-Wage"
+
+
+
+}
+
+
+$3 == "LGS"{
+if($5 <= 40){
+wage = $4 * $5 
+}
+
+else {
+
+regPay = $4 * 40
+
+overtimePay = ($5 - 40) * $4 * 1.5
+
+wage = regPay + overtimePay
+
+
+
+  if ($5 > 40) {
+    print "Thanks for the extra effort", $1
+    overtimeCnt++
+  }
+}
+
+print $1, $2, $3, wage
+
+
+
+
+
+
+}
+
+
+
+END{
+
+print overtimeCnt, "LGS employees worked overtime this week"
+
+}
