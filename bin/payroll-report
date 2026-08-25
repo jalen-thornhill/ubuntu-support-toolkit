@@ -65,7 +65,7 @@ salaryTotal = salaryTotal + monthlySalary
 
 
 END {
-  print overtimeCount, "LGS employees worked overtime this week"
+  print overtimeCnt, "LGS employees worked overtime this week"
   print ""
 
   print "Projected Salary for Engineers(ENG) and Managers(MGR) for October"
