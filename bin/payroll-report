@@ -5,7 +5,9 @@ BEGIN{
 print "LGS Employee Wages:- Week 6th - 10th October 2026"
 print "Name Job-Code Weekly-Wage"
 
-
+projectCst = 4600000
+projectMonths = 2.5 * 12
+baseMonthlySalary = (projectCst * 0.05) / projectMonths
 
 }
 
@@ -40,10 +42,41 @@ print $1, $2, $3, wage
 
 }
 
+$3== "ENG" || $3 == "MGR" {
+
+monthlySalary = baseMonthlySalary
 
 
-END{
+if($3 == "ENG" && $6 >= 10 && $5 > 35) {
 
-print overtimeCnt, "LGS employees worked overtime this week"
+	monthlySalary = monthlySalary * 1.02
+}
+
+
+
+
+salaryCnt++
+employeeName[salaryCnt] = $1 " " $2
+jobCode[salaryCnt] = $3
+predictedSalary[salaryCnt] = monthlySalary 
+salaryTotal = salaryTotal + monthlySalary
 
 }
+
+
+END {
+  print overtimeCount, "LGS employees worked overtime this week"
+  print ""
+
+  print "Projected Salary for Engineers(ENG) and Managers(MGR) for October"
+  print "Name Job-Code Monthly-Salary"
+
+  for (employee = 1; employee <= salaryCnt; employee++) {
+    print employeeName[employee], jobCode[employee], predictedSalary[employee]
+  }
+
+  averageSalary = salaryTotal / salaryCnt
+  print "Average predicted Salary:", averageSalary
+}
+
+
