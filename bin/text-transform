@@ -1,0 +1,25 @@
+#!/usr/bin/sed -f
+
+1i\
+Project Change Report
+
+#cut line 2
+2h
+
+#delete line 2
+2d
+
+#paste after line 3
+3G
+
+
+
+#appends after line 4
+4a\
+
+#replace old text/ new text
+s/modern/present-day/g
+
+
+#on line 1 remove anything that is not a number
+1s/[^0-9]//g
