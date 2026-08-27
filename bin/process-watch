@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -u
+set -o pipefail
+
+while true; do
+
+ps -u "$USER" -o pid,comm,%cpu,%mem
+
+ps -u "$USER" --no-headers -o %cpu=,%mem= | nawk '
+{
+  cpuTotal = cpuTotal + $1
+  memoryTotal = memoryTotal + $2
+}
+END {
+  print "Total CPU:", cpuTotal 
+  print "Total memory:", memoryTotal 
+  print "Average CPU:", cpuTotal / NR 
+  print "Average memory:", memoryTotal / NR 
+}' 
+
+sleep 20
+
+
+ps -u "$USER" --no-headers -o user=,comm=,%mem= |
+sort -k3 -nr |
+head -n 1 |
+awk '{
+  print "The process", $2, "run by user", $1, "is consuming the maximum memory usage of", $3 "%."
+}'
+
+
+sleep 100
+
+done
