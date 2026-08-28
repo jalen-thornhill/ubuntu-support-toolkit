@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -u
+set -o pipefail
+
+if [[ $# -eq 0 ]]; then
+
+echo  " error: username is required">&2
+exit 3
+
+
+else
+ selectedUser=$1
+
+fi
+
+
+if ! grep -q "^${selectedUser}:" /etc/passwd; then
+  echo $selectedUser "is not authorised to use this system"
+  exit 4
+fi
+
+homeDirectory=$(awk -F: -v selectedUser="$selectedUser" '$1 == selectedUser { print $6 }' /etc/passwd)
+
+diskUsage=$(du -sk "$homeDirectory" | awk '{ print $1 }')
+
+if [[ $diskUsage -gt 900 ]]; then
+  echo "User $selectedUser is close to disk usage limit"
+fi
