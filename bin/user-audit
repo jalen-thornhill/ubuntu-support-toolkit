@@ -27,3 +27,40 @@ diskUsage=$(du -sk "$homeDirectory" | awk '{ print $1 }')
 if [[ $diskUsage -gt 900 ]]; then
   echo "User $selectedUser is close to disk usage limit"
 fi
+
+
+while read -r otherUser otherHome; do
+
+otherUsage=$(du -sk "$otherHome" 2>/dev/null | nawk '{print $1 } ')
+
+
+if [[ -n $otherUsage && $otherUsage -gt 900 ]]; then
+
+echo "User $otherUser  is 
+ close to disk usage limit"
+fi
+done < <(
+  nawk -F: -v selectedUser="$selectedUser" '
+  $6 ~ /^\/home\// && $1 != selectedUser {
+    print $1, $6
+  }' /etc/passwd
+)
+
+
+while read -r loggedUser; do
+  processCount=$(pgrep -u "$loggedUser" | wc -l)
+
+  if [[ $processCount -eq 0 ]]; then
+    awk -F: -v loggedUser="$loggedUser" '
+    $1 == loggedUser {
+      print "User:", $1, "| Home:", $6, "| Shell:", $7
+    }' /etc/passwd
+
+    echo "User $loggedUser idle or logged out"
+  fi
+done < <(who | awk '{ print $1 }' | sort -u)
+
+
+fiveMinuteLoad=$(awk '{ print $2 }' /proc/loadavg)
+
+echo "System five-minute load average: $fiveMinuteLoad"
