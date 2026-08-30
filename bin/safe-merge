@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -u
+set -o pipefail
+
+read -r -p "Enter first filename: " firstFile
+read -r -p "Enter second filename: " secondFile
+
+for fileName in "$firstFile" "$secondFile"; do
+  if [[ ! -e $fileName ]]; then
+    echo "error: $fileName does not exist"
+    exit 1
+  
+elif [[ -d $fileName ]]; then
+  echo "error: $fileName is a directory"
+  exit 1
+elif [[ ! -s $fileName ]]; then
+  echo "error: $fileName is empty"
+  exit 1
+elif [[ ! -r $fileName ]]; then
+  echo "error: $fileName is not readable"
+  exit 1
+elif [[ ! -w $fileName ]]; then
+  echo "error: $fileName is not writable"
+  exit 1
+fi
+done
+
+mkdir -p .bkup
+
+tar -czf .bkup/Merfilestar.Z "$firstFile" "$secondFile"
+
+echo "Backup created successfully"
