@@ -31,3 +31,36 @@ mkdir -p .bkup
 tar -czf .bkup/Merfilestar.Z "$firstFile" "$secondFile"
 
 echo "Backup created successfully"
+
+
+
+firstWc=$(wc -l < "$firstFile")
+secondWc=$(wc -l < "$secondFile")
+
+
+if [[ firstWc -ge secondWc ]]; then
+largerFile="$firstFile"
+smallerFile="$secondFile"
+
+
+
+else
+	largerFile="$secondFile"
+	smallerFile="$firstFile"
+fi
+
+temporaryFile=$(mktemp)
+
+nawk 'NR % 2 == 1' "$smallerFile" > "$temporaryFile" 
+
+
+
+sed -i '1s|^|<SMALL>|' "$temporaryFile"
+sed -i '$s|$|</SMALL>|' "$temporaryFile"
+
+cat "$temporaryFile" >> "$largerFile"
+
+rm -- "$temporaryFile"
+rm -- "$smallerFile"
+
+
