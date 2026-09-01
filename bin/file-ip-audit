@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+set -u
+
+set -o pipefail
+
+
+if [[ $# -ne 1 ]]; then
+echo "one argument at please" >&2
+exit 5
+
+elif [[  ! -r $1 || ! -f $1 ]]; then
+echo " this file is not readable"
+exit 5
+fi
+
+
+missingCount=0
+
+while IFS= read -r fileName; do
+
+
+if [[ -e "$fileName" ]]; then
+
+    if [[ -r "$fileName" && -w "$fileName" ]]; then
+        echo "$fileName exists with read and write permissions"
+    else
+        echo "$fileName exists but does not have read and write permissions"
+    fi
+
+    if [[ -n $(find "$fileName" -mtime +5 -print -quit) ]]; then
+        echo "$fileName is older than 5 days"
+    else
+        echo "$fileName is not older than 5 days"
+	ipMatch=$(grep -nEm1 'IP address:[0-9]+(\.[0-9]+){3}' "$fileName")
+
+	
+	if [[ -n "$ipMatch" ]]; then
+    lineNumber=$(printf '%s\n' "$ipMatch" | cut -d ':' -f 1)
+    ipAddress=$(printf '%s\n' "$ipMatch" | cut -d ':' -f 3)
+
+    echo "IP address: $ipAddress"
+    echo "Line number: $lineNumber"
+
+	 ln -sfn "$fileName" ln2IPAd
+   fi
+fi
+else
+    echo "$fileName does not exist"
+    ((missingCount += 1))
+fi
+
+
+done < "$1"
+echo "Missing count of files : $missingCount"
