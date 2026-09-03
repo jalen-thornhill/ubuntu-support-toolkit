@@ -4,11 +4,11 @@ A Bash-based Linux support toolkit demonstrating practical automation, diagnosti
 
 ## Project purpose
 
-This project provides six small command-line tools that apply UNIX problem-solving skills to payroll reporting, text transformation, process monitoring, user auditing, safe file merging, and file-security checks.
+This repository contains six Bash shell scripts that perform basic user and file management tasks, as well as some common system administration operations.
 
 ## Intended users
 
-The toolkit is designed for junior Linux support technicians, students developing UNIX skills, and employers reviewing entry-level systems-support work.
+The scripts should be of interest to junior Linux support technicians as they develop their systems management skills. They should also help employers evaluate the Linux skills required of entry-level employees.
 
 ## Toolkit commands
 
