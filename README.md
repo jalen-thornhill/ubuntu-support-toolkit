@@ -1,7 +1,5 @@
 # Ubuntu Support Toolkit
 
-A Bash-based Linux support toolkit demonstrating practical automation, diagnostics, validation, and safe file handling on Ubuntu.
-
 ## Project purpose
 
 This repository contains six Bash shell scripts that perform basic user and file management tasks, as well as some common system administration operations.
