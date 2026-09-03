@@ -10,59 +10,12 @@ The scripts should be of interest to junior Linux support technicians as they de
 
 ## Toolkit commands
 
-### `payroll-report`
-
-Calculates employee pay, overtime, bonuses, and payroll summaries from a records file.
-
-```bash
-bin/payroll-report tests/fixtures/sbproj.rec
-```
-
-### `text-transform`
-
-Performs controlled text transformations using `sed` and writes the result to standard output.
-
-```bash
-bin/text-transform tests/fixtures/nistan
-```
-
-### `process-watch`
-
-Reports CPU and memory statistics for the current user's processes and identifies the process using the most memory. It runs continuously in approximately two-minute monitoring cycles; press `Ctrl+C` to stop it.
-
-```bash
-bin/process-watch
-```
-
-### `user-audit`
-
-Validates a local username and reports home-directory usage, local-user activity, login information, and the system's five-minute load average.
-
-```bash
-bin/user-audit "$USER"
-```
-
-### `safe-merge`
-
-Validates and backs up two files, appends the odd-numbered lines of the smaller file to the larger file, and removes the smaller file. Run it from the directory containing the files to merge.
-
-```bash
-cd /path/to/files
-/path/to/ubuntu-support-toolkit/bin/safe-merge
-```
-
-The command interactively requests both filenames. Before modifying either file, it stores both originals in `.bkup/Merfilestar.Z`.
-
-### `file-ip-audit`
-
-Checks files named in a list for existence, permissions, and age. It also extracts an IP address and line number from a recent file and creates the `ln2IPAd` symbolic link.
-
-Run it from the directory containing the listed files:
-
-```bash
-cd /path/to/files
-/path/to/ubuntu-support-toolkit/bin/file-ip-audit files.txt
-```
+* The payroll-report command computes the wages, overtime, and bonuses that each employee is owed based upon the data in an input payroll record file (e.g. tests/fixtures/sbproj.rec), as well as a summary of wage totals.
+* The text-transform command carries out a limited set of sed operations on an input text file (e.g. tests/fixtures/nistan), and prints the results to standard output.
+* The process-watch command repeatedly (for two minutes at a time) reports on process CPU and memory usage by user, emphasizing the process consuming the most memory (at the time). The program runs until stopped (with Ctrl+C).
+* The user-audit command checks a user name, then reports on the user’s home directory, including disk usage, recent local activity, login information, and the 5-minute system load average.
+* The safe-merge command prompts the user for the names of two files. After making backups (into an archive file .bkup/Merfilestar.Z), the lines occurring in odd-numbered positions in one file (the smaller one) are appended to the other. The smaller file is removed, as indicated on the standard output.
+* The file-ip-audit command checks that a set of files listed in an input file all exist, have appropriate permissions, and are at least a certain number of days old. It determines the line number in the most recent file containing an Internet Protocol address. Then it makes the symbolic link ln2IPAd.
 
 ## Scope
 
