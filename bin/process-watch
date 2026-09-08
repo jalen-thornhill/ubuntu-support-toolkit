@@ -3,10 +3,13 @@
 set -u
 set -o pipefail
 
+# I am repeating this monitoring cycle until the script is interrupted.
 while true; do
 
+# I am displaying this user's process identifiers, commands, and reported resource percentages.
 ps -u "$USER" -o pid,comm,%cpu,%mem
 
+# I am adding the reported percentages and dividing by the process count for the averages.
 ps -u "$USER" --no-headers -o %cpu=,%mem= | nawk '
 {
   cpuTotal = cpuTotal + $1
@@ -19,9 +22,11 @@ END {
   print "Average memory:", memoryTotal / NR 
 }' 
 
+# I am waiting twenty seconds before identifying the highest-memory process.
 sleep 20
 
 
+# I am sorting processes by memory percentage and reporting the largest one.
 ps -u "$USER" --no-headers -o user=,comm=,%mem= |
 sort -k3 -nr |
 head -n 1 |
@@ -30,6 +35,7 @@ awk '{
 }'
 
 
+# I am waiting another hundred seconds before starting the next cycle.
 sleep 100
 
 done

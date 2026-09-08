@@ -1,25 +1,26 @@
 #!/usr/bin/sed -f
 
+# I am inserting a report heading before the first input line.
 1i\
 Project Change Report
 
-#cut line 2
+# I am copying the second input line into the hold space.
 2h
 
-#delete line 2
+# I am deleting that line from its original position.
 2d
 
-#paste after line 3
+# I am appending the saved line after the third input line.
 3G
 
 
 
-#appends after line 4
+# I am appending a blank line after the fourth input line.
 4a\
 
-#replace old text/ new text
+# I am replacing every occurrence of modern with present-day on the lines reaching this command.
 s/modern/present-day/g
 
 
-#on line 1 remove anything that is not a number
+# I am keeping only digits from the first input line, without changing the inserted heading.
 1s/[^0-9]//g

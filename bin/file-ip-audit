@@ -5,6 +5,7 @@ set -u
 set -o pipefail
 
 
+# I am requiring one argument naming a readable regular file containing paths to audit.
 if [[ $# -ne 1 ]]; then
 echo "one argument at please" >&2
 exit 5
@@ -17,9 +18,11 @@ fi
 
 missingCount=0
 
+# I am reading each path without trimming leading or trailing whitespace.
 while IFS= read -r fileName; do
 
 
+# I am checking file existence separately from read and write permissions.
 if [[ -e "$fileName" ]]; then
 
     if [[ -r "$fileName" && -w "$fileName" ]]; then
@@ -28,13 +31,16 @@ if [[ -e "$fileName" ]]; then
         echo "$fileName exists but does not have read and write permissions"
     fi
 
+    # I am checking file age with find; -mtime +5 matches at least six complete days.
     if [[ -n $(find "$fileName" -mtime +5 -print -quit) ]]; then
         echo "$fileName is older than 5 days"
     else
         echo "$fileName is not older than 5 days"
+	# I am keeping the first IP-pattern match and its line number outside the older-file branch.
 	ipMatch=$(grep -nEm1 'IP address:[0-9]+(\.[0-9]+){3}' "$fileName")
 
 	
+	# I am splitting the colon-separated match to display the line number and address field.
 	if [[ -n "$ipMatch" ]]; then
     lineNumber=$(printf '%s\n' "$ipMatch" | cut -d ':' -f 1)
     ipAddress=$(printf '%s\n' "$ipMatch" | cut -d ':' -f 3)
@@ -42,11 +48,13 @@ if [[ -e "$fileName" ]]; then
     echo "IP address: $ipAddress"
     echo "Line number: $lineNumber"
 
+	 # I am updating ln2IPAd to point to the matching file.
 	 ln -sfn "$fileName" ln2IPAd
    fi
 fi
 else
     echo "$fileName does not exist"
+    # I am counting missing paths for the final summary.
     ((missingCount += 1))
 fi
 

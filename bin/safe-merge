@@ -3,9 +3,11 @@
 set -u
 set -o pipefail
 
+# I am collecting the two filenames for validation, backup, and merging.
 read -r -p "Enter first filename: " firstFile
 read -r -p "Enter second filename: " secondFile
 
+# I am rejecting missing files, directories, empty files, and files without the required access.
 for fileName in "$firstFile" "$secondFile"; do
   if [[ ! -e $fileName ]]; then
     echo "error: $fileName does not exist"
@@ -26,6 +28,7 @@ elif [[ ! -w $fileName ]]; then
 fi
 done
 
+# I am creating the backup directory before archiving both original files.
 mkdir -p .bkup
 
 tar -czf .bkup/Merfilestar.Z "$firstFile" "$secondFile"
@@ -34,10 +37,12 @@ echo "Backup created successfully"
 
 
 
+# I am comparing newline counts to choose which file will receive the merged text.
 firstWc=$(wc -l < "$firstFile")
 secondWc=$(wc -l < "$secondFile")
 
 
+# I am choosing the first file as the destination when both counts are equal.
 if [[ firstWc -ge secondWc ]]; then
 largerFile="$firstFile"
 smallerFile="$secondFile"
@@ -49,17 +54,20 @@ else
 	smallerFile="$firstFile"
 fi
 
+# I am preparing temporary storage for the smaller file's odd-numbered lines.
 temporaryFile=$(mktemp)
 
 nawk 'NR % 2 == 1' "$smallerFile" > "$temporaryFile" 
 
 
 
+# I am wrapping the selected text in SMALL tags before appending it to the larger file.
 sed -i '1s|^|<SMALL>|' "$temporaryFile"
 sed -i '$s|$|</SMALL>|' "$temporaryFile"
 
 cat "$temporaryFile" >> "$largerFile"
 
+# I am removing the temporary file and smaller original after the append command.
 rm -- "$temporaryFile"
 rm -- "$smallerFile"
 

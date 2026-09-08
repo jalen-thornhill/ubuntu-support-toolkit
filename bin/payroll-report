@@ -1,5 +1,6 @@
 #!/usr/bin/nawk -f
 
+# I am preparing the heading and deriving the monthly salary base from the project budget.
 BEGIN{
 
 print "LGS Employee Wages:- Week 6th - 10th October 2026"
@@ -12,6 +13,7 @@ baseMonthlySalary = (projectCst * 0.05) / projectMonths
 }
 
 
+# I am calculating hourly wages, with time and a half for hours beyond forty.
 $3 == "LGS"{
 if($5 <= 40){
 wage = $4 * $5 
@@ -27,6 +29,7 @@ wage = regPay + overtimePay
 
 
 
+  # I am thanking and counting employees who worked overtime.
   if ($5 > 40) {
     print "Thanks for the extra effort", $1
     overtimeCnt++
@@ -42,11 +45,13 @@ print $1, $2, $3, wage
 
 }
 
+# I am calculating project-based monthly salaries for engineers and managers.
 $3== "ENG" || $3 == "MGR" {
 
 monthlySalary = baseMonthlySalary
 
 
+# I am applying a two-percent increase when an engineer meets both qualification checks.
 if($3 == "ENG" && $6 >= 10 && $5 > 35) {
 
 	monthlySalary = monthlySalary * 1.02
@@ -55,6 +60,7 @@ if($3 == "ENG" && $6 >= 10 && $5 > 35) {
 
 
 
+# I am storing each salaried employee's details and accumulating their predicted pay.
 salaryCnt++
 employeeName[salaryCnt] = $1 " " $2
 jobCode[salaryCnt] = $3
@@ -64,6 +70,7 @@ salaryTotal = salaryTotal + monthlySalary
 }
 
 
+# I am displaying the overtime count and stored salary predictions.
 END {
   print overtimeCnt, "LGS employees worked overtime this week"
   print ""
@@ -75,6 +82,7 @@ END {
     print employeeName[employee], jobCode[employee], predictedSalary[employee]
   }
 
+  # I am calculating the average, assuming at least one salaried employee was counted.
   averageSalary = salaryTotal / salaryCnt
   print "Average predicted Salary:", averageSalary
 }

@@ -3,6 +3,7 @@
 set -u
 set -o pipefail
 
+# I am requiring a username before checking the local account information.
 if [[ $# -eq 0 ]]; then
 
 echo  " error: username is required">&2
@@ -15,20 +16,24 @@ else
 fi
 
 
+# I am checking whether the supplied username pattern matches a local account entry.
 if ! grep -q "^${selectedUser}:" /etc/passwd; then
   echo $selectedUser "is not authorised to use this system"
   exit 4
 fi
 
+# I am finding the selected user's home directory and measuring its disk usage in KiB.
 homeDirectory=$(awk -F: -v selectedUser="$selectedUser" '$1 == selectedUser { print $6 }' /etc/passwd)
 
 diskUsage=$(du -sk "$homeDirectory" | awk '{ print $1 }')
 
+# I am warning when the measured usage exceeds the script's 900 KiB threshold.
 if [[ $diskUsage -gt 900 ]]; then
   echo "User $selectedUser is close to disk usage limit"
 fi
 
 
+# I am checking the other local accounts whose home directories are under /home.
 while read -r otherUser otherHome; do
 
 otherUsage=$(du -sk "$otherHome" 2>/dev/null | nawk '{print $1 } ')
@@ -47,9 +52,11 @@ done < <(
 )
 
 
+# I am counting processes for the usernames currently reported by who.
 while read -r loggedUser; do
   processCount=$(pgrep -u "$loggedUser" | wc -l)
 
+  # I am displaying account details when no processes are found for a listed user.
   if [[ $processCount -eq 0 ]]; then
     awk -F: -v loggedUser="$loggedUser" '
     $1 == loggedUser {
@@ -61,6 +68,7 @@ while read -r loggedUser; do
 done < <(who | awk '{ print $1 }' | sort -u)
 
 
+# I am reading the second load-average value, which covers the previous five minutes.
 fiveMinuteLoad=$(awk '{ print $2 }' /proc/loadavg)
 
 echo "System five-minute load average: $fiveMinuteLoad"
